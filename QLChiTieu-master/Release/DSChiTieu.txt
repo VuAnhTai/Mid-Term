@@ -1,0 +1,4 @@
+Ăn uống,tra sữa,30000
+Di chuyển,xe bus,10000
+Nhà cửa,thuê nhà,100000
+Nhu yếu phẩm,nước hoa,300000
