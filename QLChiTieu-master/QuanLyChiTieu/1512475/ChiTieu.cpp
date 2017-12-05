@@ -16,7 +16,7 @@ CChiTieu::CChiTieu(wstring loai, wstring noiDung, long soTien)
 	this->lSoTien = soTien;
 }
 
-void CChiTieu:: setLoai(wstring loai)
+void CChiTieu::setLoai(wstring loai)
 {
 	buffLoai = loai;
 }
@@ -28,7 +28,7 @@ wstring CChiTieu::getLoai()
 
 
 void CChiTieu::setNoiDung(wstring noiDung)
-{		
+{
 	buffNoiDung = noiDung;
 }
 
@@ -38,7 +38,7 @@ wstring CChiTieu::getNoiDung()
 }
 
 void CChiTieu::setSoTien(long soTien)
-{	
+{
 	this->lSoTien = soTien;
 }
 

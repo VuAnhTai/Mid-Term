@@ -1,8 +1,8 @@
-﻿// QLChiTieu.cpp : Defines the entry point for the application.
+﻿// 1512475.cpp : Defines the entry point for the application.
 //
 
 #include "stdafx.h"
-#include "QLChiTieu.h"
+#include "1512475.h"
 #include "DSChiTieu.h"
 #include <string>
 #include <Shellapi.h> //Shell object
@@ -13,9 +13,13 @@
 #pragma comment(lib, "ComCtl32.lib")
 using namespace std;
 
+
+#define MAX_LOADSTRING 100
+#define MAX_CHAR 30
 #define MAX_LOADSTRING 100
 #define SO_LOAI_CHI 6
 
+// My function
 void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify);
 void OnPaint(HWND hwnd);
 void OnDestroy(HWND hwnd);
@@ -26,12 +30,28 @@ void loadListView();
 void taoChuThich(HWND hWnd, HDC hdc, PAINTSTRUCT ps);
 void rePaint(HWND hWnd);
 void loadRate();
-bool isInteger(WCHAR* buffer,int length);
+bool isInteger(WCHAR* buffer, int length);
 
 // Global Variables:
 HINSTANCE hInst;								// current instance
 TCHAR szTitle[MAX_LOADSTRING];					// The title bar text
-TCHAR szWindowClass[MAX_LOADSTRING];			// the main window class name
+TCHAR szWindowClass[MAX_LOADSTRING];
+
+HWND lvDSChi;
+HWND comboBoxLoaiChiTieu;
+HWND txtNoiDungChi;
+HWND txtSoTien;
+HWND txtTongTien;
+CDSChiTieu dsChiTieu;
+
+HWND rateAnUong;
+HWND rateDiChuyen;
+HWND rateXeCo;
+HWND rateNhaCua;
+HWND rateNhuYeuPham;
+HWND rateDichVu;
+
+// the main window class name
 
 // Forward declarations of functions included in this code module:
 ATOM				MyRegisterClass(HINSTANCE hInstance);
@@ -47,13 +67,13 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 	UNREFERENCED_PARAMETER(hPrevInstance);
 	UNREFERENCED_PARAMETER(lpCmdLine);
 
- 	// TODO: Place code here
+ 	// TODO: Place code here.
 	MSG msg;
 	HACCEL hAccelTable;
 
 	// Initialize global strings
 	LoadString(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
-	LoadString(hInstance, IDC_QLCHITIEU, szWindowClass, MAX_LOADSTRING);
+	LoadString(hInstance, IDC_MY1512475, szWindowClass, MAX_LOADSTRING);
 	MyRegisterClass(hInstance);
 
 	// Perform application initialization:
@@ -62,7 +82,7 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 		return FALSE;
 	}
 
-	hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_QLCHITIEU));
+	hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_MY1512475));
 
 	// Main message loop:
 	while (GetMessage(&msg, NULL, 0, 0))
@@ -95,10 +115,10 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 	wcex.cbClsExtra		= 0;
 	wcex.cbWndExtra		= 0;
 	wcex.hInstance		= hInstance;
-	wcex.hIcon			= LoadIcon(hInstance, MAKEINTRESOURCE(IDI_QLCHITIEU));
+	wcex.hIcon			= LoadIcon(hInstance, MAKEINTRESOURCE(IDI_MY1512475));
 	wcex.hCursor		= LoadCursor(NULL, IDC_ARROW);
 	wcex.hbrBackground	= (HBRUSH)(COLOR_WINDOW);
-	wcex.lpszMenuName	= MAKEINTRESOURCE(IDC_QLCHITIEU);
+	wcex.lpszMenuName	= MAKEINTRESOURCE(IDC_MY1512475);
 	wcex.lpszClassName	= szWindowClass;
 	wcex.hIconSm		= LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
 
@@ -121,7 +141,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
    hInst = hInstance; // Store instance handle in our global variable
 
-   hWnd = CreateWindow(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW & ~WS_THICKFRAME,
+   hWnd = CreateWindow(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
       CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, NULL, hInstance, NULL);
 
    if (!hWnd)
@@ -180,20 +200,6 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 	return (INT_PTR)FALSE;
 }
 
-HWND lvDSChi;
-HWND comboBoxLoaiChiTieu;
-HWND txtNoiDungChi;
-HWND txtSoTien;
-HWND txtTongTien;
-CDSChiTieu dsChiTieu;
-
-HWND rateAnUong;
-HWND rateDiChuyen;
-HWND rateXeCo;
-HWND rateNhaCua;
-HWND rateNhuYeuPham;
-HWND rateDichVu;
-
 BOOL OnCreate(HWND hWnd, LPCREATESTRUCT lpCreateStruct)
 {
 	INITCOMMONCONTROLSEX icc;
@@ -201,10 +207,10 @@ BOOL OnCreate(HWND hWnd, LPCREATESTRUCT lpCreateStruct)
 	icc.dwICC = ICC_WIN95_CLASSES;
 	InitCommonControlsEx(&icc);
 
-	RECT main; 
+	RECT main;
 	GetWindowRect(hWnd, &main);
 	InitCommonControls();
-	
+
 	// Lấy font hệ thống
 	LOGFONT lf;
 	GetObject(GetStockObject(DEFAULT_GUI_FONT), sizeof(LOGFONT), &lf);
@@ -214,48 +220,48 @@ BOOL OnCreate(HWND hWnd, LPCREATESTRUCT lpCreateStruct)
 		lf.lfOutPrecision, lf.lfClipPrecision, lf.lfQuality,
 		lf.lfPitchAndFamily, lf.lfFaceName);
 
-	
-	HWND boxNhap = CreateWindowEx(0,L"BUTTON",L"Thêm chi tiêu", WS_CHILD | WS_VISIBLE | BS_GROUPBOX,50, 30, 350, 220,hWnd, NULL,hInst,NULL);
+
+	HWND boxNhap = CreateWindowEx(0, L"BUTTON", L"THÊM CHI TIÊU", WS_CHILD | WS_VISIBLE | BS_GROUPBOX, 50, 30, 350, 220, hWnd, NULL, hInst, NULL);
 	SendMessage(boxNhap, WM_SETFONT, WPARAM(hFont), TRUE);
 
-	HWND hwnd = CreateWindowEx(0, L"STATIC", L"Loại chi tiêu:", WS_CHILD | WS_VISIBLE | SS_LEFT, 50, 50, 100, 20, boxNhap, NULL, hInst, NULL);
+	HWND hwnd = CreateWindowEx(0, L"STATIC", L"LOẠI CHI TIÊU:", WS_CHILD | WS_VISIBLE | SS_LEFT, 50, 50, 100, 20, boxNhap, NULL, hInst, NULL);
 	SendMessage(hwnd, WM_SETFONT, WPARAM(hFont), TRUE);
 	//Tao combobox va cac thuoc tinh
-	comboBoxLoaiChiTieu = CreateWindowEx(0, WC_COMBOBOX, TEXT(""),CBS_DROPDOWNLIST |  WS_CHILD | WS_OVERLAPPED | WS_VISIBLE, 150, 50, 150, 20, boxNhap, NULL, hInst, NULL);
+	comboBoxLoaiChiTieu = CreateWindowEx(0, WC_COMBOBOX, TEXT(""), CBS_DROPDOWNLIST | WS_CHILD | WS_OVERLAPPED | WS_VISIBLE, 150, 50, 150, 20, boxNhap, NULL, hInst, NULL);
 	SendMessage(comboBoxLoaiChiTieu, WM_SETFONT, WPARAM(hFont), TRUE);
-	const TCHAR* ComboBoxItems[6] = { _T("Ăn uống"), _T("Di chuyển"), _T("Nhà cửa"),_T("Xe cộ"), _T("Nhu yếu phẩm"), _T("Dịch vụ") };
-	for(int i=0;i<SO_LOAI_CHI;i++)
+	const TCHAR* ComboBoxItems[6] = { _T("Ăn uống"), _T("Di chuyển"), _T("Nhà cửa"), _T("Xe cộ"), _T("Nhu yếu phẩm"), _T("Dịch vụ") };
+	for (int i = 0; i<SO_LOAI_CHI; i++)
 	{
-		SendMessage(comboBoxLoaiChiTieu, CB_INSERTSTRING, i, (LPARAM) ComboBoxItems[i]);
+		SendMessage(comboBoxLoaiChiTieu, CB_INSERTSTRING, i, (LPARAM)ComboBoxItems[i]);
 	}
 
 	SendMessage(comboBoxLoaiChiTieu, CB_SETCURSEL, 0, 0);
-	hwnd = CreateWindowEx(0, L"STATIC", L"Nội dung chi:", WS_CHILD | WS_VISIBLE | SS_LEFT, 50, 90, 100, 20, boxNhap, NULL, hInst, NULL);
+	hwnd = CreateWindowEx(0, L"STATIC", L"NỘI DUNG CHI:", WS_CHILD | WS_VISIBLE | SS_LEFT, 50, 90, 100, 20, boxNhap, NULL, hInst, NULL);
 	SendMessage(hwnd, WM_SETFONT, WPARAM(hFont), TRUE);
 	txtNoiDungChi = CreateWindowEx(0, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP, 150, 90, 150, 20, boxNhap, NULL, hInst, NULL);
 	SendMessage(txtNoiDungChi, WM_SETFONT, WPARAM(hFont), TRUE);
 
-	hwnd = CreateWindowEx(0, L"STATIC", L"Số tiền:", WS_CHILD | WS_VISIBLE | SS_LEFT, 50, 130, 100, 20, boxNhap, NULL, hInst, NULL);
+	hwnd = CreateWindowEx(0, L"STATIC", L"SỐ TIỀN:", WS_CHILD | WS_VISIBLE | SS_LEFT, 50, 130, 100, 20, boxNhap, NULL, hInst, NULL);
 	SendMessage(hwnd, WM_SETFONT, WPARAM(hFont), TRUE);
-	txtSoTien = CreateWindowEx(0, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_BORDER| SS_RIGHT| WS_TABSTOP, 150, 130, 150, 20, boxNhap, NULL, hInst, NULL);
+	txtSoTien = CreateWindowEx(0, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_BORDER | SS_RIGHT | WS_TABSTOP, 150, 130, 150, 20, boxNhap, NULL, hInst, NULL);
 	SendMessage(txtSoTien, WM_SETFONT, WPARAM(hFont), TRUE);
 
-	HWND boxList = CreateWindowEx(0,L"BUTTON",L"Danh Sách chi tiêu", WS_CHILD | WS_VISIBLE | BS_GROUPBOX,450, 30, 520, 220,hWnd, NULL,hInst,NULL);
+	HWND boxList = CreateWindowEx(0, L"BUTTON", L"DANH SÁCH CHI TIÊU", WS_CHILD | WS_VISIBLE | BS_GROUPBOX, 450, 30, 520, 220, hWnd, NULL, hInst, NULL);
 	SendMessage(boxList, WM_SETFONT, WPARAM(hFont), TRUE);
 	//tao listview
-	lvDSChi = CreateWindowEx(0, WC_LISTVIEW, L"Danh sách chi", WS_CHILD | WS_VISIBLE | WS_VSCROLL,10,20, 500, 175,boxList, NULL,hInst,NULL);
+	lvDSChi = CreateWindowEx(0, WC_LISTVIEW, L"DANH SÁCH CHI", WS_CHILD | WS_VISIBLE | WS_VSCROLL, 10, 20, 500, 175, boxList, NULL, hInst, NULL);
 	SendMessage(lvDSChi, WM_SETFONT, WPARAM(hFont), TRUE);
 	//Đổi sang kiểu details
 	SetWindowLong(lvDSChi, GWL_STYLE, GetWindowLong(lvDSChi, GWL_STYLE) | LVS_REPORT);
 	createCol();
 
-	hwnd = CreateWindowEx(0,L"BUTTON",L">", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,410, 35, 30, 215,hWnd, (HMENU)IDC_BTNTHEM,hInst,NULL);
+	hwnd = CreateWindowEx(0, L"BUTTON", L">", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON, 410, 35, 30, 215, hWnd, (HMENU)IDC_BTNTHEM, hInst, NULL);
 	SendMessage(hwnd, WM_SETFONT, WPARAM(hFont), TRUE);
 
-	HWND boxDraw = CreateWindowEx(0,L"BUTTON",L"Thống kê chi tiêu", WS_CHILD | WS_VISIBLE | BS_GROUPBOX,50, 280, 920, 180,hWnd, NULL,hInst,NULL);
+	HWND boxDraw = CreateWindowEx(0, L"BUTTON", L"THỐNG KÊ CHI TIÊU", WS_CHILD | WS_VISIBLE | BS_GROUPBOX, 50, 280, 920, 180, hWnd, NULL, hInst, NULL);
 	SendMessage(boxDraw, WM_SETFONT, WPARAM(hFont), TRUE);
-	
-	hwnd = CreateWindowEx(0, L"STATIC", L"Tổng tiền:", WS_CHILD | WS_VISIBLE | SS_LEFT, 50, 50, 100, 20, boxDraw, NULL, hInst, NULL);
+
+	hwnd = CreateWindowEx(0, L"STATIC", L"TỔNG TIỀN:", WS_CHILD | WS_VISIBLE | SS_LEFT, 50, 50, 100, 20, boxDraw, NULL, hInst, NULL);
 	SendMessage(hwnd, WM_SETFONT, WPARAM(hFont), TRUE);
 
 	txtTongTien = CreateWindowEx(0, L"STATIC", L"", WS_CHILD | WS_VISIBLE | WS_BORDER | SS_RIGHT, 120, 50, 100, 20, boxDraw, NULL, hInst, NULL);
@@ -293,9 +299,9 @@ void OnCommand(HWND hWnd, int id, HWND hwndCtl, UINT codeNotify)
 	int stNoiDung = 0;
 	int stLoai = 0;
 
-	WCHAR* buffSoTien =NULL;
-	WCHAR* buffNoiDung =NULL;
-	WCHAR* buffLoai =NULL;
+	WCHAR* buffSoTien = NULL;
+	WCHAR* buffNoiDung = NULL;
+	WCHAR* buffLoai = NULL;
 	WCHAR* buffTongTien = NULL;
 
 	wstring noiDung;
@@ -304,115 +310,103 @@ void OnCommand(HWND hWnd, int id, HWND hwndCtl, UINT codeNotify)
 
 	CChiTieu chiTieu;
 
-	switch(id)
-	{
-		case IDM_ABOUT:
-			MessageBox(hWnd,L"1512475 Vũ Anh Tài",L"My information",MB_OK|MB_ICONINFORMATION|MB_SETFOREGROUND);
-			break;
-		case ID_HELP_INSTRUCTION:
-			ShellExecute(NULL, _T("open"), L"Readme.docx", NULL, NULL, SW_SHOWNORMAL);
-			break;
-		case IDM_EXIT:
-			DestroyWindow(hWnd);
-			break;
+	switch (id){
+	case IDM_ABOUT:
+		MessageBox(hWnd, L"1512475 Vũ Anh Tài", L"My information", MB_OK | MB_ICONINFORMATION | MB_SETFOREGROUND);
+		break;
+	case ID_HELP_INSTRUCTION:
+		ShellExecute(NULL, _T("open"), L"Readme.docx", NULL, NULL, SW_SHOWNORMAL);
+		break;
+	case IDM_EXIT:
+		DestroyWindow(hWnd);
+		break;
 
-		case IDC_BTNTHEM:
-			stSoTien = GetWindowTextLength(txtSoTien);
-			buffSoTien = new WCHAR[stSoTien+1];
-			GetWindowText(txtSoTien, buffSoTien, stSoTien+1);
-			valSoTien = _wtol(buffSoTien);
+	case IDC_BTNTHEM:
+		stSoTien = GetWindowTextLength(txtSoTien);
+		buffSoTien = new WCHAR[stSoTien + 1];
+		GetWindowText(txtSoTien, buffSoTien, stSoTien + 1);
+		valSoTien = _wtol(buffSoTien);
 
-			if(!isInteger(buffSoTien,stSoTien) || valSoTien < 1000)
-			{
-				MessageBox(hWnd,L"Số tiền phải lớn hơn 1000VNĐ",L"Nhập lỗi",MB_OK | MB_ICONERROR);
+		if (!isInteger(buffSoTien, stSoTien) || valSoTien < 1000){
+			MessageBox(hWnd, L"Số tiền phải lớn hơn 1000VNĐ", L"Nhập lỗi", MB_OK | MB_ICONERROR);
+			return;
+		}
+
+		stNoiDung = GetWindowTextLength(txtNoiDungChi);
+		buffNoiDung = new WCHAR[stNoiDung + 1];
+		GetWindowText(txtNoiDungChi, buffNoiDung, stNoiDung + 1);
+
+		if (stNoiDung == 0){
+			int i = MessageBox(hWnd, L"Bạn thật sự không nhập nội dung cho chi tiêu?", L"Xác nhận", MB_YESNO | MB_ICONQUESTION);
+			if (i == IDNO){
 				return;
 			}
+		}
 
-			stNoiDung = GetWindowTextLength(txtNoiDungChi);
-			buffNoiDung = new WCHAR[stNoiDung+1];
-			GetWindowText(txtNoiDungChi, buffNoiDung, stNoiDung+1);
-			
-			if(stNoiDung == 0)
-			{
-				int i = MessageBox(hWnd,L"Bạn thật sự không nhập nội dung cho chi tiêu?",L"Xác nhận",MB_YESNO | MB_ICONQUESTION);
-				if(i == IDNO)
-				{
-					return;
-				}
-				else
-				{
-					//Nothing
-				}
+		stLoai = GetWindowTextLength(comboBoxLoaiChiTieu);
+		buffLoai = new WCHAR[stLoai + 1];
+		GetWindowText(comboBoxLoaiChiTieu, buffLoai, stLoai + 1);
 
-			}
+		LV_ITEM lv;
+		lv.mask = LVIF_TEXT;
+		lv.iItem = dsChiTieu.getCountItem() + 1;
+		lv.iSubItem = 0;
+		lv.pszText = buffLoai;
+		ListView_InsertItem(lvDSChi, &lv);
+		ListView_SetItemText(lvDSChi, dsChiTieu.getCountItem(), 1, buffNoiDung);
+		ListView_SetItemText(lvDSChi, dsChiTieu.getCountItem(), 2, buffSoTien);
 
+		loai = wstring(buffLoai);
+		noiDung = wstring(buffNoiDung);
+		chiTieu = CChiTieu(loai, noiDung, valSoTien);
 
-			stLoai = GetWindowTextLength(comboBoxLoaiChiTieu);
-			buffLoai = new WCHAR[stLoai+1];
-			GetWindowText(comboBoxLoaiChiTieu,buffLoai,stLoai+1);
+		dsChiTieu.them(chiTieu);
+		buffTongTien = new WCHAR[20];
+		swprintf(buffTongTien, 20, L"%ld", dsChiTieu.getTongTien());
+		SetWindowText(txtTongTien, buffTongTien);
+		rePaint(hWnd);
+		loadRate();
 
-
-			LV_ITEM lv;
-			lv.mask = LVIF_TEXT;
-			lv.iItem = dsChiTieu.getCountItem()+1;
-			lv.iSubItem = 0;
-			lv.pszText = buffLoai;
-			ListView_InsertItem(lvDSChi, &lv);
-			ListView_SetItemText(lvDSChi, dsChiTieu.getCountItem(), 1, buffNoiDung);
-			ListView_SetItemText(lvDSChi, dsChiTieu.getCountItem(), 2, buffSoTien);
-			
-
-			loai = wstring(buffLoai);
-			noiDung = wstring(buffNoiDung);
-			chiTieu = CChiTieu(loai,noiDung,valSoTien);
-
-			dsChiTieu.them(chiTieu);
-			buffTongTien = new WCHAR[20];
-			swprintf(buffTongTien,20,L"%ld",dsChiTieu.getTongTien());
-			SetWindowText(txtTongTien,buffTongTien);
-			rePaint(hWnd);
-			loadRate();
-
-			break;
+		break;
 	}
-	if(!buffLoai)
+	if (!buffLoai)
 		delete[]buffLoai;
-	if(!buffNoiDung)
+	if (!buffNoiDung)
 		delete[]buffNoiDung;
-	if(!buffSoTien)
+	if (!buffSoTien)
 		delete[]buffSoTien;
 	return;
 }
+
 void loadListView()
 {
 	LV_ITEM lv;
-	lv.mask =LVIF_TEXT;
+	lv.mask = LVIF_TEXT;
 	lv.iItem = dsChiTieu.getCountItem();
 	WCHAR* buffSoTien = new WCHAR[20];
 	WCHAR* buffNoiDung = new WCHAR[20];
 	WCHAR* buffLoai = new WCHAR[20];
-	for(int i=0;i<dsChiTieu.getCountItem();i++)
-	{
+	for (int i = 0; i<dsChiTieu.getCountItem(); i++){
 		CChiTieu chiTieu = dsChiTieu.getChiTieu(i);
 		lv.iSubItem = 0;
 		chiTieu.getNoiDung().c_str();
-		swprintf(buffLoai,20,L"%s",chiTieu.getLoai().c_str());
+		swprintf(buffLoai, 20, L"%s", chiTieu.getLoai().c_str());
 		lv.pszText = buffLoai;
 		ListView_InsertItem(lvDSChi, &lv);
-		swprintf(buffNoiDung,20,L"%s",chiTieu.getNoiDung().c_str());
-		ListView_SetItemText(lvDSChi, i, 1,buffNoiDung);
-		swprintf(buffSoTien,20,L"%ld",chiTieu.getSoTien());
+		swprintf(buffNoiDung, 20, L"%s", chiTieu.getNoiDung().c_str());
+		ListView_SetItemText(lvDSChi, i, 1, buffNoiDung);
+		swprintf(buffSoTien, 20, L"%ld", chiTieu.getSoTien());
 		ListView_SetItemText(lvDSChi, i, 2, buffSoTien);
 	}
 
 	//lấy tổng tiền
-	swprintf(buffSoTien,20,L"%ld",dsChiTieu.getTongTien());
-	SetWindowText(txtTongTien,buffSoTien);
-	if(!buffLoai)
+	swprintf(buffSoTien, 20, L"%ld", dsChiTieu.getTongTien());
+	SetWindowText(txtTongTien, buffSoTien);
+	if (!buffLoai)
 		delete[]buffLoai;
-	if(!buffNoiDung)
+	if (!buffNoiDung)
 		delete[]buffNoiDung;
-	if(!buffSoTien)
+	if (!buffSoTien)
 		delete[]buffSoTien;
 
 }
@@ -434,56 +428,56 @@ void OnPaint(HWND hWnd)
 	PAINTSTRUCT ps;
 	hdc = BeginPaint(hWnd, &ps);
 
-	nextLength+=lengthAnUong;
-	HRGN anUong = CreateRectRgn(preLength, 400, nextLength, 450);
-	HBRUSH hbrushAnUong = CreateSolidBrush(RGB(250,75, 45));	
-	FillRgn(hdc,anUong,hbrushAnUong);
+	nextLength += lengthAnUong;
+	HRGN anUong = CreateRectRgn(preLength, 405, nextLength, 445);
+	HBRUSH hbrushAnUong = CreateSolidBrush(RGB(255, 160, 25));
+	FillRgn(hdc, anUong, hbrushAnUong);
 
 	preLength = nextLength;
-	nextLength += lengthDiChuyen;	
-	HRGN diChuyen = CreateRectRgn(preLength, 400, nextLength, 450);
-	HBRUSH hbrushDiChuyen = CreateSolidBrush(RGB(255,160, 25));	
-	FillRgn(hdc,diChuyen,hbrushDiChuyen);
+	nextLength += lengthDiChuyen;
+	HRGN diChuyen = CreateRectRgn(preLength, 405, nextLength, 445);
+	HBRUSH hbrushDiChuyen = CreateSolidBrush(RGB(250, 75, 45)); 
+	FillRgn(hdc, diChuyen, hbrushDiChuyen);
 
 	preLength = nextLength;
 	nextLength += lengthNhaCua;
-	HRGN nhaCua = CreateRectRgn(preLength, 400, nextLength, 450);
-	HBRUSH hbrushnhaCua = CreateSolidBrush(RGB(240,255, 100));	
-	FillRgn(hdc,nhaCua,hbrushnhaCua);
+	HRGN nhaCua = CreateRectRgn(preLength, 405, nextLength, 445);
+	HBRUSH hbrushnhaCua = CreateSolidBrush(RGB(85, 250, 60));
+	FillRgn(hdc, nhaCua, hbrushnhaCua);
 
 	preLength = nextLength;
 	nextLength += lengthXeCo;
-	HRGN xeCo = CreateRectRgn(preLength, 400, nextLength, 450);
-	HBRUSH hbrushxeCo = CreateSolidBrush(RGB(85,250, 60));	
-	FillRgn(hdc,xeCo,hbrushxeCo);
+	HRGN xeCo = CreateRectRgn(preLength, 405, nextLength, 445);
+	HBRUSH hbrushxeCo = CreateSolidBrush(RGB(240, 255, 100));
+	FillRgn(hdc, xeCo, hbrushxeCo);
 
 	preLength = nextLength;
 	nextLength += lengthNhuYeuPham;
-	HRGN nhuYeuPham = CreateRectRgn(preLength, 400, nextLength, 450);
-	HBRUSH hbrushnhuYeuPham = CreateSolidBrush(RGB(60,235, 250));	
-	FillRgn(hdc,nhuYeuPham,hbrushnhuYeuPham);
+	HRGN nhuYeuPham = CreateRectRgn(preLength, 405, nextLength, 445);
+	HBRUSH hbrushnhuYeuPham = CreateSolidBrush(RGB(60, 65, 250));
+	FillRgn(hdc, nhuYeuPham, hbrushnhuYeuPham);
 
 	preLength = nextLength;
 	nextLength += lengthDichVu;
-	HRGN dichVu = CreateRectRgn(preLength, 400, nextLength, 450);
-	HBRUSH hbrushdichVu = CreateSolidBrush(RGB(60,65, 250));	
-	FillRgn(hdc,dichVu,hbrushdichVu);
+	HRGN dichVu = CreateRectRgn(preLength, 405, nextLength, 445);
+	HBRUSH hbrushdichVu = CreateSolidBrush(RGB(60, 235, 250));
+	FillRgn(hdc, dichVu, hbrushdichVu);
 
-	taoChuThich(hWnd,hdc,ps);
+	taoChuThich(hWnd, hdc, ps);
 	EndPaint(hWnd, &ps);
 	return;
 }
-#define MAX_CHAR 30
+
 void loadRate()
 {
 	WCHAR* buffer = new WCHAR[MAX_CHAR];
-	
+
 	float tiLe = 100;
-	float tiLeDiChuyen = 100*dsChiTieu.getTiLeMotLoai(1);
-	float tiLeNhaCua = 100*dsChiTieu.getTiLeMotLoai(2);
-	float tiLeXeCo = 100*dsChiTieu.getTiLeMotLoai(3);
-	float tiLeNhuYeuPham = 100*dsChiTieu.getTiLeMotLoai(4);
-	float tiLeDichVu = 100*dsChiTieu.getTiLeMotLoai(5);
+	float tiLeDiChuyen = 100 * dsChiTieu.getTiLeMotLoai(1);
+	float tiLeNhaCua = 100 * dsChiTieu.getTiLeMotLoai(2);
+	float tiLeXeCo = 100 * dsChiTieu.getTiLeMotLoai(3);
+	float tiLeNhuYeuPham = 100 * dsChiTieu.getTiLeMotLoai(4);
+	float tiLeDichVu = 100 * dsChiTieu.getTiLeMotLoai(5);
 	float tiLeAnUong = tiLe - tiLeDiChuyen - tiLeDichVu - tiLeNhaCua - tiLeNhuYeuPham - tiLeXeCo;
 	float tongTien = dsChiTieu.getTongTien();
 	if (tongTien == 0){
@@ -543,50 +537,50 @@ void rePaint(HWND hWnd)
 	PAINTSTRUCT ps;
 	hdc = BeginPaint(hWnd, &ps);
 
-	nextLength+=lengthAnUong;
+	nextLength += lengthAnUong;
 	HRGN anUong = CreateRectRgn(preLength, 400, nextLength, 450);
-	HBRUSH hbrushAnUong = CreateSolidBrush(RGB(250,75, 45));	
-	FillRgn(hdc,anUong,hbrushAnUong);
+	HBRUSH hbrushAnUong = CreateSolidBrush(RGB(255, 160, 25));
+	FillRgn(hdc, anUong, hbrushAnUong);
 
 	preLength = nextLength;
-	nextLength += lengthDiChuyen;	
+	nextLength += lengthDiChuyen;
 	HRGN diChuyen = CreateRectRgn(preLength, 400, nextLength, 450);
-	HBRUSH hbrushDiChuyen = CreateSolidBrush(RGB(255,160, 25));	
-	FillRgn(hdc,diChuyen,hbrushDiChuyen);
+	HBRUSH hbrushDiChuyen = CreateSolidBrush(RGB(250, 75, 45));
+	FillRgn(hdc, diChuyen, hbrushDiChuyen);
 
 	preLength = nextLength;
 	nextLength += lengthNhaCua;
 	HRGN nhaCua = CreateRectRgn(preLength, 400, nextLength, 450);
-	HBRUSH hbrushnhaCua = CreateSolidBrush(RGB(240,255, 100));	
-	FillRgn(hdc,nhaCua,hbrushnhaCua);
+	HBRUSH hbrushnhaCua = CreateSolidBrush(RGB(85, 250, 60));
+	FillRgn(hdc, nhaCua, hbrushnhaCua);
 
 	preLength = nextLength;
 	nextLength += lengthXeCo;
 	HRGN xeCo = CreateRectRgn(preLength, 400, nextLength, 450);
-	HBRUSH hbrushxeCo = CreateSolidBrush(RGB(85,250, 60));	
-	FillRgn(hdc,xeCo,hbrushxeCo);
+	HBRUSH hbrushxeCo = CreateSolidBrush(RGB(240, 255, 100));
+	FillRgn(hdc, xeCo, hbrushxeCo);
 
 	preLength = nextLength;
 	nextLength += lengthNhuYeuPham;
 	HRGN nhuYeuPham = CreateRectRgn(preLength, 400, nextLength, 450);
-	HBRUSH hbrushnhuYeuPham = CreateSolidBrush(RGB(60,235, 250));	
-	FillRgn(hdc,nhuYeuPham,hbrushnhuYeuPham);
+	HBRUSH hbrushnhuYeuPham = CreateSolidBrush(RGB(60, 235, 250));
+	FillRgn(hdc, nhuYeuPham, hbrushnhuYeuPham);
 
 	preLength = nextLength;
 	nextLength += lengthDichVu;
 	HRGN dichVu = CreateRectRgn(preLength, 400, nextLength, 450);
-	HBRUSH hbrushdichVu = CreateSolidBrush(RGB(60,65, 250));	
-	FillRgn(hdc,dichVu,hbrushdichVu);
+	HBRUSH hbrushdichVu = CreateSolidBrush(RGB(60, 65, 250));
+	FillRgn(hdc, dichVu, hbrushdichVu);
 
 	//Vẽ lại mỗi lần thêm chi tiêu
-	InvalidateRgn(hWnd,anUong,TRUE);
-	InvalidateRgn(hWnd,diChuyen,TRUE);
-	InvalidateRgn(hWnd,dichVu,TRUE);
-	InvalidateRgn(hWnd,xeCo,TRUE);
-	InvalidateRgn(hWnd,nhuYeuPham,TRUE);
-	InvalidateRgn(hWnd,nhaCua,TRUE);
+	InvalidateRgn(hWnd, anUong, TRUE);
+	InvalidateRgn(hWnd, diChuyen, TRUE);
+	InvalidateRgn(hWnd, dichVu, TRUE);
+	InvalidateRgn(hWnd, xeCo, TRUE);
+	InvalidateRgn(hWnd, nhuYeuPham, TRUE);
+	InvalidateRgn(hWnd, nhaCua, TRUE);
 
-	taoChuThich(hWnd,hdc,ps);
+	taoChuThich(hWnd, hdc, ps);
 	EndPaint(hWnd, &ps);
 	return;
 }
@@ -595,30 +589,30 @@ void taoChuThich(HWND hWnd, HDC hdc, PAINTSTRUCT ps)
 {
 
 	HRGN anUong = CreateRectRgn(350, 300, 370, 320);
-	HBRUSH hbrushAnUong = CreateSolidBrush(RGB(250,75, 45));	
-	FillRgn(hdc,anUong,hbrushAnUong);
+	HBRUSH hbrushAnUong = CreateSolidBrush(RGB(255, 160, 25));
+	FillRgn(hdc, anUong, hbrushAnUong);
 
-	HRGN diChuyen = CreateRectRgn(550, 300, 570, 320);	
-	HBRUSH hbrushDiChuyen = CreateSolidBrush(RGB(255,160, 25));	
-	FillRgn(hdc,diChuyen,hbrushDiChuyen);
+	HRGN diChuyen = CreateRectRgn(550, 300, 570, 320);
+	HBRUSH hbrushDiChuyen = CreateSolidBrush(RGB(250, 75, 45));
+	FillRgn(hdc, diChuyen, hbrushDiChuyen);
 
 	HRGN nhaCua = CreateRectRgn(750, 300, 770, 320);
-	HBRUSH hbrushnhaCua = CreateSolidBrush(RGB(240,255, 100));	
-	FillRgn(hdc,nhaCua,hbrushnhaCua);
+	HBRUSH hbrushnhaCua = CreateSolidBrush(RGB(85, 250, 60));
+	FillRgn(hdc, nhaCua, hbrushnhaCua);
 
 	HRGN xeCo = CreateRectRgn(350, 350, 370, 370);
-	HBRUSH hbrushxeCo = CreateSolidBrush(RGB(85,250, 60));	
-	FillRgn(hdc,xeCo,hbrushxeCo);
+	HBRUSH hbrushxeCo = CreateSolidBrush(RGB(240, 255, 100));
+	FillRgn(hdc, xeCo, hbrushxeCo);
 
 	HRGN nhuYeuPham = CreateRectRgn(550, 350, 570, 370);
-	HBRUSH hbrushnhuYeuPham = CreateSolidBrush(RGB(60,235, 250));	
-	FillRgn(hdc,nhuYeuPham,hbrushnhuYeuPham);
+	HBRUSH hbrushnhuYeuPham = CreateSolidBrush(RGB(60, 65, 250));
+	FillRgn(hdc, nhuYeuPham, hbrushnhuYeuPham);
 
 	HRGN dichVu = CreateRectRgn(750, 350, 770, 370);
-	HBRUSH hbrushdichVu = CreateSolidBrush(RGB(60,65, 250));	
-	FillRgn(hdc,dichVu,hbrushdichVu);
+	HBRUSH hbrushdichVu = CreateSolidBrush(RGB(60, 235, 250));
+	FillRgn(hdc, dichVu, hbrushdichVu);
 
-	
+
 }
 
 
@@ -634,17 +628,17 @@ void createCol()
 	LVCOLUMN lvCol;
 
 	lvCol.mask = LVCF_FMT | LVCF_TEXT | LVCF_WIDTH;
-	lvCol.fmt=LVCFMT_LEFT;
+	lvCol.fmt = LVCFMT_LEFT;
 	lvCol.cx = 150;
 	lvCol.pszText = _T("Loại chi tiêu");
 	ListView_InsertColumn(lvDSChi, 0, &lvCol);
-	
+
 	lvCol.mask = LVCF_FMT | LVCF_TEXT | LVCF_WIDTH;
-	lvCol.fmt=LVCFMT_LEFT;
+	lvCol.fmt = LVCFMT_LEFT;
 	lvCol.cx = 200;
 	lvCol.pszText = _T("Nội dung chi");
 	ListView_InsertColumn(lvDSChi, 1, &lvCol);
-	
+
 	lvCol.mask = LVCF_FMT | LVCF_TEXT | LVCF_WIDTH;
 	lvCol.fmt = LVCFMT_LEFT;
 	lvCol.cx = 130;
@@ -652,20 +646,17 @@ void createCol()
 	ListView_InsertColumn(lvDSChi, 2, &lvCol);
 }
 
-bool isInteger(WCHAR* buffer,int length)
+bool isInteger(WCHAR* buffer, int length)
 {
-	if(buffer == NULL && length == 0)
+	if (buffer == NULL && length == 0)
 		return true;
-	for(int i=0;i<length;i++)
-	{
-		if(buffer[i] == '\0')
+	for (int i = 0; i<length; i++){
+		if (buffer[i] == '\0')
 			break;
-		if(buffer[i] < '0' || buffer[i] > '9' )
-		{
+		if (buffer[i] < '0' || buffer[i] > '9'){
 			return false;
 		}
 
 	}
 	return true;
-
 }
